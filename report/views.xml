@@ -1,0 +1,93 @@
+<odoo>
+    <data>
+
+        <record id="paperformat_print_kanban_barcode" model="report.paperformat" >
+            <field name="name">Print Barcode</field>
+            <field name="format">custom</field>
+            <field name="orientation">Landscape</field>
+            <field name="default" eval="False" />
+            <field name="dpi" eval="90" />
+            <field name="page_height">40</field>
+            <field name="page_width">15</field>
+            <field name="margin_top" eval="0" />
+            <field name="margin_right" eval="0" />
+            <field name="margin_bottom" eval="0" />
+            <field name="margin_left" eval="0" />
+            <field name="header_spacing" eval="0"/>
+            <field name="dpi" eval="90" />
+        </record>
+
+        <report
+            id="report_print_kanban_barcode"
+            string="Print Barcode"
+            model="vit.kanban"
+            report_type="qweb-pdf"
+            paperformat="paperformat_print_kanban_barcode"
+            file="vit_kanban_barcode.file_report_kanban_barcode"
+            name="vit_kanban_barcode.file_report_kanban_barcode"
+        />
+
+        <template id="vit_kanban_barcode.file_report_kanban_barcode">
+            <t t-call="web.html_container">
+                <t t-call="vit_kanban_barcode.external_layout_label" >
+                    <t t-foreach="docs" t-as="doc">
+                        <t t-call="vit_kanban_barcode.file_report_document"/>
+                    </t>
+                </t>
+            </t>
+        </template>
+
+        <template id="vit_kanban_barcode.file_report_document">
+
+            <div class="page">
+              <t t-foreach="doc.detail_ids" t-as="detail">
+                <t t-foreach="detail.move_line_ids" t-as="detail_line">
+                  
+                  <t t-if="detail.product_id.kg_pal">
+                    <t t-set="pal" t-value="int(detail.product_id.kg_pal)"/>
+                  </t>
+                  <t t-else="">
+                    <t t-set="pal" t-value="20"/>
+                  </t>
+                  
+                  <t t-set="qty" t-value="round(detail_line.qty_done/pal+2)"/>
+                  <div class="row" t-foreach="range(qty)" t-as="no">
+                    <div class="col-xs-3">
+                      <div class="text-dark">
+                        <table style="border: 1px solid black; font-size:9px; margin:12px">
+                          <tr>
+                            <td>
+                              <span style="margin-left:5px;" t-field="detail_line.lot_name1"/><br/>
+                              <span style="margin-left:5px;" t-field="detail.product_id.default_code"/><br/>
+                              <span style="margin-left:5px;" t-field="detail_line.lot_name2"/>
+                            </td>
+                            <td>
+                              <img t-att-src="'/report/barcode/?type=%s&amp;value=%s+%s+%s&amp;width=%s&amp;height=%s' % ('QR', detail_line.lot_name1, detail.product_id.default_code, detail_line.lot_name2, 50, 50)"/>
+                            </td>
+                            <td>
+                              <center><span t-esc="no+1"/></center>
+                              <span style="margin-right:5px;" t-field="doc.partner_id.ref"/><br/>
+                              <span style="margin-right:5px;" t-esc="'{:,}'.format(round(detail_line.qty_done))"/><span> Kg</span><br/>
+                              <span style="margin-right:5px;" t-esc="context_timestamp(datetime.datetime.now()).strftime('%m/%d/%Y')" />
+                            </td>
+                          </tr>
+                        </table>
+                      </div>
+                    </div>
+                  </div>
+
+                </t>
+              </t>
+            </div> <!-- end page -->
+
+        </template>
+
+        <template id="external_layout_label">
+            <div class="article o_report_layout_standard" t-att-data-oe-model="o and o._name" t-att-data-oe-id="o and o.id" t-att-data-oe-lang="o and o.env.context.get('lang')">
+                <t t-call="web.address_layout"/>
+                <t t-raw="0"/>
+            </div>
+        </template>
+
+    </data>
+</odoo>
